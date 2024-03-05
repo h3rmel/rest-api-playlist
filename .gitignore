@@ -1,0 +1,8 @@
+# Folders
+node_modules
+
+# Archives
+.env
+package-lock*
+yarn*
+pnpm-lock*
