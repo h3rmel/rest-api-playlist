@@ -3,7 +3,7 @@ import { isValidObjectId } from "mongoose";
 
 import { connectToMongo } from "../database/connect";
 import { NinjaModel } from "../database/models/ninja";
-import { BadRequestError, NotFoundError } from "../errors";
+import { BadRequestError, NotFoundError } from "../utils/errors";
 
 const router: Router = express.Router();
 
@@ -33,39 +33,42 @@ router.get(
 /**
  * Find nearby ninjas
  */
-router.get("/ninjas/nearby", async (req: Request, res: Response, next: NextFunction) => {
-  const mongoConnection = await connectToMongo();
+router.get(
+  "/ninjas/nearby",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const mongoConnection = await connectToMongo();
 
-  if (!req.query.lat || !req.query.lng) {
-    throw new BadRequestError({
-      message: "Coordinates are required!",
-    });
+    if (!req.query.lat || !req.query.lng)
+      throw new BadRequestError("Coordinates are required!");
+
+    try {
+      const ninjasNearby = await NinjaModel.aggregate([
+        {
+          $geoNear: {
+            near: {
+              type: "Point",
+              coordinates: [Number(req.query.lng), Number(req.query.lat)],
+            },
+            distanceField: "dist.calculated",
+            maxDistance: 100000,
+            spherical: true,
+          },
+        },
+      ]);
+
+      console.log(ninjasNearby);
+
+      res.status(200).send({
+        message: "Nearby ninjas listed successfully",
+        ninjas: ninjasNearby,
+      });
+    } catch (error) {
+      next(error);
+    } finally {
+      mongoConnection.disconnect();
+    }
   }
-
-  try {
-    const ninjasNearby = await NinjaModel.aggregate([
-      {
-        $geoNear: {
-          near: { type: "Point", coordinates: [Number(req.query.lng), Number(req.query.lat)] },
-          distanceField: "dist.calculated" ,
-          maxDistance: 100000,
-          spherical: true,
-        }
-      }
-    ])
-
-    console.log(ninjasNearby);
-
-    res.status(200).send({
-      message: "Nearby ninjas listed successfully",
-      ninjas: ninjasNearby
-    })
-  } catch (error) {
-    next(error);
-  } finally {
-    mongoConnection.disconnect();
-  };
-});
+);
 
 /**
  * Find a Ninja
@@ -78,10 +81,7 @@ router.get(
     try {
       const ninja = await NinjaModel.findById(req.params.id);
 
-      if (!ninja?.$isValid)
-        throw new NotFoundError({
-          message: "Ninja not found",
-        });
+      if (!ninja?.$isValid) throw new NotFoundError("Ninja not found");
 
       res.status(200).send({
         message: "Ninja finded successfully",
@@ -103,23 +103,12 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     const mongoConnection = await connectToMongo();
 
-    if (!req.body.name) {
-      throw new BadRequestError({
-        message: "Name is required!",
-      });
-    }
+    if (!req.body.name) throw new BadRequestError("Name is required!");
 
-    if (!req.body.rank) {
-      throw new BadRequestError({
-        message: "Rank is required!",
-      });
-    }
+    if (!req.body.rank) throw new BadRequestError("Rank is required!");
 
-    if (!req.body.geometry.coordinates) {
-      throw new BadRequestError({
-        message: "Coordinates are required!",
-      });
-    }
+    if (!req.body.geometry.coordinates)
+      throw new BadRequestError("Coordinates are required!");
 
     try {
       const newNinja = await NinjaModel.create({
@@ -128,8 +117,8 @@ router.post(
         available: req.body.available,
         geometry: {
           type: req.body.geometry.type,
-          coordinates: req.body.geometry.coordinates
-        }
+          coordinates: req.body.geometry.coordinates,
+        },
       });
 
       res.status(201).send({
@@ -153,29 +142,20 @@ router.put(
     const mongoConnection = await connectToMongo();
 
     if (!isValidObjectId(req.params.id))
-      throw new BadRequestError({
-        message: "Invalid ID format!",
-      });
+      throw new BadRequestError("Invalid ID format!");
 
     if (!req.body.name) {
-      throw new BadRequestError({
-        message: "Name is required!",
-      });
+      throw new BadRequestError("Name is required!");
     }
 
     if (!req.body.rank) {
-      throw new BadRequestError({
-        message: "Rank is required!",
-      });
+      throw new BadRequestError("Rank is required!");
     }
 
     try {
       const existingNinja = await NinjaModel.findById(req.params.id);
 
-      if (!existingNinja?.$isValid)
-        throw new NotFoundError({
-          message: "Ninja not found",
-        });
+      if (!existingNinja?.$isValid) throw new NotFoundError("Ninja not found");
 
       await NinjaModel.findByIdAndUpdate(
         {
@@ -207,17 +187,12 @@ router.delete(
     const mongoConnection = await connectToMongo();
 
     if (!isValidObjectId(req.params.id))
-      throw new BadRequestError({
-        message: "Invalid ID format!",
-      });
+      throw new BadRequestError("Invalid ID format!");
 
     try {
       const existingNinja = await NinjaModel.findById(req.params.id);
 
-      if (!existingNinja?.$isValid)
-        throw new NotFoundError({
-          message: "Ninja not found",
-        });
+      if (!existingNinja?.$isValid) throw new NotFoundError("Ninja not found");
 
       const deletedNinja = await NinjaModel.findByIdAndDelete(req.params.id);
 

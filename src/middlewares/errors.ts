@@ -1,4 +1,4 @@
-import { CustomError } from "../errors/modules/CustomError";
+import { CustomError } from "../utils/errors";
 import { NextFunction, Request, Response } from "express";
 
 export const errorHandler = (
@@ -9,23 +9,13 @@ export const errorHandler = (
 ) => {
   //* Handled Errors
   if (err instanceof CustomError) {
-    const { statusCode, errors, logging } = err;
+    const { status, logging, message } = err;
 
     if (logging) {
-      console.error(
-        JSON.stringify(
-          {
-            code: err.statusCode,
-            errors: err.errors,
-            stack: err.stack,
-          },
-          null,
-          2
-        )
-      );
+      console.error(message);
     }
 
-    return res.status(statusCode).send({ errors });
+    return res.status(status).send({ message });
   }
 
   // Unhandled errors
