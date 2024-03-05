@@ -5,6 +5,8 @@ import express, { Express } from "express";
 import dotenv from "dotenv";
 import { json } from "body-parser";
 import "express-async-errors";
+import swaggerUi from "swagger-ui-express";
+import swaggerOutput from "./swagger_output.json";
 
 //* Project Dependencies
 import { router as ninjaRoutes } from "./routes/ninja";
@@ -25,6 +27,8 @@ app.use(json());
 
 // Routes (Ninjas)
 app.use("/api", ninjaRoutes);
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerOutput));
 
 // Error Handling
 app.use(errorHandler);

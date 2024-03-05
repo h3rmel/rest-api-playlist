@@ -4,17 +4,23 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "sourceMap": false,
-    "outDir": "./dist/",
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "strict": true,
     "skipLibCheck": true,
     "allowJs": false,
     "noEmit": true,
 
+    "outDir": "./dist/",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+
+    "lib": ["ES2015"],
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node", "express"]
   },
-  "include": ["./src/"]
+  "include": ["src/swagger-output.json", "src/**/*"],
+  "exclude": ["node_modules"]
 }
