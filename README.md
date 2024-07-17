@@ -1,3 +1,3 @@
 # Rest API Playlist
 
-Depois eu escrevo um resumo...to com preguiça agora.
+Learning a thing or two about MongoDB and Mongoose through a The Net Ninja course.
